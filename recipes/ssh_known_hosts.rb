@@ -49,6 +49,6 @@ end
 
 ruby_block 'write_ssh_known_hosts' do
   block do
-    SshKnownHosts.new(known_hosts_file).set_hosts(nodes)
+    HostsAwareness::SshKnownHosts.new(known_hosts_file).set_hosts(nodes)
   end
 end

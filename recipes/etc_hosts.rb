@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: hosts-awareness
-# Recipe:: default
+# Recipe:: etc_hosts
 #
 # Copyright 2011, Rob Lewis <rob@kohder.com>
 #
@@ -17,5 +17,17 @@
 # limitations under the License.
 #
 
-include_recipe 'hosts-awareness::etc_hosts'
-include_recipe 'hosts-awareness::ssh_known_hosts'
+ruby_block 'update_etc_hosts' do
+  block do
+    all_network_names = data_bag('networks')
+    networks = node['hosts_awareness'].nil? ? [] : Array(node['hosts_awareness']['networks'])
+    networks = all_network_names if networks.first == 'all'
+    networks.each do |network_name|
+      network = HostsAwareness::Network.from_data_bag(network_name)
+      etc_hosts = HostsAwareness::EtcHosts.new('/etc/hosts')
+      etc_hosts.block_token = network_name
+      etc_hosts.use_private_addresses = network.member?(node)
+      etc_hosts.set_hosts(network.hosts)
+    end
+  end
+end

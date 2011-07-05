@@ -17,61 +17,63 @@
 # limitations under the License.
 #
 
-class SshKnownHosts
-  attr_reader :known_hosts_file
-  attr_accessor :start_token
-  attr_accessor :end_token
+module HostsAwareness
+  class SshKnownHosts
+    attr_reader :known_hosts_file
+    attr_accessor :start_token
+    attr_accessor :end_token
 
-  def initialize(known_hosts_file, start_token=nil, end_token=nil)
-    @known_hosts_file = known_hosts_file
-    @start_token = start_token || '# chef nodes start'
-    @end_token = end_token || '# chef nodes end'
-  end
-
-  def set_hosts(hosts)
-    write_out!(hosts)
-  end
-
-  def empty!
-    write_out!([])
-  end
-
-  protected
-
-  def write_out!(hosts)
-    new_ghosts = hosts.inject('') do |s, host|
-      fqdn = host['fqdn']
-      unless fqdn.nil?
-        rsa_public_ssh_key = host['keys']['ssh']['host_rsa_public']
-        s += "#{fqdn},#{host['ipaddress']} ssh-rsa #{rsa_public_ssh_key}\n" unless rsa_public_ssh_key.nil?
-        dsa_public_ssh_key = host['keys']['ssh']['host_rsa_public']
-        s += "#{fqdn},#{host['ipaddress']} ssh-dsa #{dsa_public_ssh_key}\n" unless dsa_public_ssh_key.nil?
-      end
-      s
+    def initialize(known_hosts_file, start_token=nil, end_token=nil)
+      @known_hosts_file = known_hosts_file
+      @start_token = start_token || '# chef nodes start'
+      @end_token = end_token || '# chef nodes end'
     end
 
-    File.open(@known_hosts_file, 'r+') do |f|
-      out, over, seen_tokens = '', false, false
-      f.each do |line|
-        if line =~ /^#{@start_token}/o
-          over = seen_tokens = true
-          out << line << new_ghosts
-        elsif line =~ /^#{@end_token}/o
-          over = false
+    def set_hosts(hosts)
+      write_out!(hosts)
+    end
+
+    def empty!
+      write_out!([])
+    end
+
+    protected
+
+    def write_out!(hosts)
+      new_ghosts = hosts.inject('') do |s, host|
+        fqdn = host['fqdn']
+        unless fqdn.nil?
+          rsa_public_ssh_key = host['keys']['ssh']['host_rsa_public']
+          s += "#{fqdn},#{host['ipaddress']} ssh-rsa #{rsa_public_ssh_key}\n" unless rsa_public_ssh_key.nil?
+          dsa_public_ssh_key = host['keys']['ssh']['host_rsa_public']
+          s += "#{fqdn},#{host['ipaddress']} ssh-dsa #{dsa_public_ssh_key}\n" unless dsa_public_ssh_key.nil?
         end
-        out << line unless over
-      end
-      if !seen_tokens
-        out << surround_with_tokens(new_ghosts)
+        s
       end
 
-      f.pos = 0
-      f.print out
-      f.truncate(f.pos)
+      File.open(@known_hosts_file, 'r+') do |f|
+        out, over, seen_tokens = '', false, false
+        f.each do |line|
+          if line =~ /^#{@start_token}/o
+            over = seen_tokens = true
+            out << line << new_ghosts
+          elsif line =~ /^#{@end_token}/o
+            over = false
+          end
+          out << line unless over
+        end
+        if !seen_tokens
+          out << surround_with_tokens(new_ghosts)
+        end
+
+        f.pos = 0
+        f.print out
+        f.truncate(f.pos)
+      end
     end
-  end
 
-  def surround_with_tokens(str)
-    "\n#{@start_token}\n" + str + "#{@end_token}\n"
+    def surround_with_tokens(str)
+      "\n#{@start_token}\n" + str + "#{@end_token}\n"
+    end
   end
 end
