@@ -2,7 +2,7 @@
 # Cookbook Name:: hosts-awareness
 # Attributes:: ssh_known_hosts
 #
-# Copyright 2011, Rob Lewis <rob@kohder.com>
+# Copyright 2012, Rob Lewis <rob@kohder.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 # limitations under the License.
 #
 
-default['hosts_aware']['ssh_known_hosts']['file_owner'] = nil
-default['hosts_aware']['ssh_known_hosts']['file_group'] = nil
-default['hosts_aware']['ssh_known_hosts']['all_users'] = false
+default['hosts_awareness']['ssh_known_hosts']['file_owner'] = nil
+
+default['hosts_awareness']['ssh_known_hosts']['file_group'] = nil
+
+default['hosts_awareness']['ssh_known_hosts']['all_users'] = false

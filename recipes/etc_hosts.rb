@@ -2,7 +2,7 @@
 # Cookbook Name:: hosts-awareness
 # Recipe:: etc_hosts
 #
-# Copyright 2011, Rob Lewis <rob@kohder.com>
+# Copyright 2012, Rob Lewis <rob@kohder.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@
 
 ruby_block 'update_etc_hosts' do
   block do
+    all_host_alias_mappings = data_bag('host_aliases')
+    host_alias_mappings = node['hosts_awareness'].nil? ? [] : Array(node['hosts_awareness']['host_aliases'])
+    host_alias_mappings = all_host_alias_mappings if host_alias_mappings.first == 'all'
+    alias_mappings = HostsAwareness::HostAliases.from_data_bags(host_alias_mappings).alias_mappings
     all_network_names = data_bag('networks')
     networks = node['hosts_awareness'].nil? ? [] : Array(node['hosts_awareness']['networks'])
     networks = all_network_names if networks.first == 'all'
@@ -27,7 +31,7 @@ ruby_block 'update_etc_hosts' do
       etc_hosts = HostsAwareness::EtcHosts.new('/etc/hosts')
       etc_hosts.block_token = network_name
       etc_hosts.use_private_addresses = network.member?(node)
-      etc_hosts.set_hosts(network.hosts)
+      etc_hosts.set_hosts(network.hosts, alias_mappings)
     end
   end
 end

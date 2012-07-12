@@ -2,7 +2,7 @@
 # Cookbook Name:: hosts-awareness
 # Library:: Host
 #
-# Copyright 2011, Rob Lewis <rob@kohder.com>
+# Copyright 2021, Rob Lewis <rob@kohder.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,6 +69,10 @@ module HostsAwareness
           @hostname.split('.').first
         end
       end
+    end
+
+    def has_short_hostname?
+      !hostname.eql?(short_hostname)
     end
 
     def domain_name

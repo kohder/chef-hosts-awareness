@@ -2,7 +2,7 @@
 # Cookbook Name:: hosts-awareness
 # Library:: EtcHosts
 #
-# Copyright 2011, Rob Lewis <rob@kohder.com>
+# Copyright 2012, Rob Lewis <rob@kohder.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ module HostsAwareness
       @block_token || 'chef nodes'
     end
 
-    def set_hosts(hosts)
-      write_out!(hosts)
+    def set_hosts(hosts, alias_mappings=nil)
+      write_out!(hosts, alias_mappings)
     end
 
     def empty!
@@ -42,38 +42,51 @@ module HostsAwareness
 
     protected
 
-    def host_entry(host)
+    def host_entry(host, alias_mappings)
+      aliases = []
+      aliases << (host.has_short_hostname? ? host.short_hostname : '')
+      aliases << host.provider_public_hostname
+      aliases << host.provider_private_hostname
+      aliases.concat(alias_mappings[host.hostname]) unless alias_mappings.nil? || alias_mappings[host.hostname].nil?
+
       if use_private_addresses
-        [host.private_ipv4, host.hostname, host.short_hostname, host.provider_public_hostname, host.provider_private_hostname]
+        [host.private_ipv4, host.hostname] + aliases
       else
-        [host.public_ipv4, host.hostname, host.short_hostname, host.provider_public_hostname, host.provider_private_hostname]
+        [host.public_ipv4, host.hostname] + aliases
       end
     end
 
-    def format_host_entries(hosts)
-      host_entries = hosts.sort{|a,b| a.hostname <=> b.hostname}.collect{|host| host_entry(host)}
-      a = host_entries.transpose
-      a = a.map do |col|
-        w = col.map{|cell| cell.to_s.length}.max
-        col.map{|cell| cell.to_s.ljust(w)}
+    def format_host_entries(hosts, alias_mappings)
+      host_entries = hosts.sort{|a,b| a.hostname <=> b.hostname}.collect{|host| host_entry(host, alias_mappings)}
+      column_widths = []
+      host_entries.each do |row|
+        row.each_with_index do |cell, i|
+          len = cell.to_s.length
+          column_widths[i] = len if column_widths[i].nil? || len > column_widths[i]
+        end
       end
-      a.transpose.inject(''){|s, row| s << row.join('  ').rstrip + "\n"; s}
+      host_entries.map do |row|
+        row.each_with_index.inject('') do |s, (cell, i)|
+          s << cell.to_s.ljust(column_widths[i]+2)
+          s
+        end.rstrip
+      end.join("\n")
     end
 
-    def write_out!(hosts)
-      host_entries_string = format_host_entries(hosts)
+    def write_out!(hosts, alias_mappings=nil)
+      host_entries_string = format_host_entries(hosts, alias_mappings)
       File.open(@etc_hosts_file, 'r+') do |f|
         out, over, seen_tokens = '', false, false
         f.each do |line|
           if line =~ /^#{start_token}/
             over = seen_tokens = true
-            out << line << host_entries_string
+            out << line << host_entries_string << "\n"
           elsif line =~ /^#{end_token}/
             over = false
           end
           out << line unless over
         end
-        if !seen_tokens
+        unless seen_tokens
           out << surround_with_tokens(host_entries_string)
         end
 
@@ -84,7 +97,7 @@ module HostsAwareness
     end
 
     def surround_with_tokens(str)
-      "\n#{start_token}\n" + str + "#{end_token}\n"
+      "\n#{start_token}\n" + str + "\n#{end_token}\n"
     end
 
     def start_token()
