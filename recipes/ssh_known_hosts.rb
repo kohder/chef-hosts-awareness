@@ -39,8 +39,8 @@ known_hosts_file = node['hosts_aware']['ssh_known_hosts']['all_users'] ? "/etc/s
 
 file known_hosts_file do
   mode 0644
-  owner node['hosts_aware']['ssh_known_hosts']['file_owner']
-  group node['hosts_aware']['ssh_known_hosts']['file_group']
+  owner node['hosts_awareness']['ssh_known_hosts']['file_owner']
+  group node['hosts_awareness']['ssh_known_hosts']['file_group']
   backup false
 end
 
