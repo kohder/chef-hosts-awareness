@@ -17,8 +17,7 @@
 # limitations under the License.
 #
 
-require 'chef/mixin/language'
-include Chef::Mixin::Language
+include Chef::DSL::PlatformIntrospection
 
 module HostsAwareness
   class HostAliases

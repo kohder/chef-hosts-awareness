@@ -4,7 +4,7 @@ This cookbook is used to manage entries in etc/hosts and ssh/known_hosts for nod
 
 = REQUIREMENTS:
 
-Tested on Ubuntu and Mac OSX
+Tested on Ubuntu, CentOS and Mac OSX
 
 = LICENSE & AUTHOR:
 
