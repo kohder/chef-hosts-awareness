@@ -22,9 +22,9 @@ nodes = []
 search(:node, "*:*") do |z|
   # Prior to first chef-client run, the current node may not have attributes from search
   if z.name == node.name
-    z["hostname"] = node["hostname"]
-    z["ipaddress"] = node["ipaddress"]
-    z["keys"] = node["keys"]
+    z.default["hostname"] = node["hostname"]
+    z.default["ipaddress"] = node["ipaddress"]
+    z.default["keys"] = node["keys"]
   end
 
   # Skip the node if it doesn't have one or more of these attributes
